@@ -1,0 +1,12 @@
+Proyecto: SGP-DSS — Sistema de Gestión de Pedidos, Desayunos Sorpresa Stella
+Arquitectura: monolito Streamlit (una sola app Python: interfaz + lógica + ML)
+Stack: Python 3.10, Streamlit, pandas, scikit-learn, mlxtend, Plotly, SQLite, joblib
+Pantallas del sistema (9): Login, Dashboard, Gestión de Pedidos, Crear Pedido,
+  Importar WhatsApp, Registrar Pago, Pagos y Cartera, Cierre de Caja, Reportes
+Modelos ML: RandomForestRegressor (pronóstico), KMeans (segmentación clientes),
+  DecisionTreeClassifier (cancelación), Apriori (asociación productos),
+  RandomForestClassifier (predicción pago)
+BD: SQLite con pandas (pd.read_sql / to_sql) o CSV local
+Despliegue: Streamlit Cloud conectado a este repositorio GitHub
+Genera siempre código Python con docstrings en español, manejo de errores con try/except,
+  y usando st.session_state para persistir datos entre páginas.
