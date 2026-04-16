@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from utils.database import get_connection, init_db, query_df
-from utils.wa_parser import parse_whatsapp_message
+from utils.wa_parser import parse_whatsapp_message_items
 
 st.set_page_config(page_title="Importar WhatsApp", layout="wide")
 
@@ -108,7 +108,7 @@ msg = st.text_area(
 )
 
 if st.button("Procesar Mensaje"):
-    res = parse_whatsapp_message(msg)
+    res = parse_whatsapp_message_items(msg)
     st.session_state["wa_parse_badge"] = res["badge"]
     st.session_state["wa_parse_msg"] = res["mensaje"]
     items = res.get("items") or []

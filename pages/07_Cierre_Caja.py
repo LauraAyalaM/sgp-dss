@@ -281,12 +281,12 @@ else:
     )
     fig.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
     fig.update_layout(
-        xaxis_tickmode="linear",
-        xaxis_tick0=0,
-        dx=1,
-        yaxis_tickformat=",.0f",
-        showlegend=False,
-        height=400,
+         xaxis_tickmode="linear",
+         xaxis_tick0=0,
+         xaxis_dtick=1,   # <-- era dx=1, el correcto es xaxis_dtick
+         yaxis_tickformat=",.0f",
+         showlegend=False,
+         height=400,
     )
     st.plotly_chart(fig, use_container_width=True)
 
