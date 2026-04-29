@@ -159,7 +159,9 @@ with cn2:
     fecha_pedido = st.date_input("Fecha del Pedido", value=date.today(), key="wa_fecha_pedido")
 
 if st.button("Confirmar Pedido"):
-    tab = st.session_state.get("wa_df_last") or st.session_state.get("wa_df")
+    tab = st.session_state.get("wa_df_last")
+    if tab is None:
+        tab = st.session_state.get("wa_df")
     if tab is None or tab.empty:
         st.error("No hay productos para confirmar. Procese un mensaje primero.")
     elif not (nombre_cliente or "").strip():
