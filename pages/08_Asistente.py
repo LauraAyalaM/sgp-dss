@@ -1,5 +1,5 @@
 """Asistente IA — Chatbot de consultas del negocio."""
-
+import streamlit.components.v1 as components
 from __future__ import annotations
 
 import os
@@ -350,7 +350,16 @@ def _responder(historial: list[dict], contexto: str) -> str:
     except Exception as e:
         return f"❌ Error al consultar la IA: {e}"
 
-
+def _scroll_to_bottom():
+    components.html(
+        """
+        <script>
+            const msgs = window.parent.document.querySelectorAll('[data-testid="stChatMessage"]');
+            if (msgs.length) msgs[msgs.length - 1].scrollIntoView({ behavior: 'smooth', block: 'end' });
+        </script>
+        """,
+        height=0,
+    )
 # ══════════════════════════════════════════════════════════════════════════════
 # UI
 # ══════════════════════════════════════════════════════════════════════════════
@@ -414,6 +423,7 @@ if pregunta:
             )
         st.markdown(respuesta)
     st.session_state["chat_historial"].append({"role": "assistant", "content": respuesta})
+    _scroll_to_bottom()
 
 # Limpiar conversación
 if st.session_state["chat_historial"]:
