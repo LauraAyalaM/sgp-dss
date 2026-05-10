@@ -9,12 +9,18 @@ from datetime import date, timedelta
 
 from utils.database import init_db, query_df
 from utils.ml_service import segmentar_clientes
+from utils.sidebar import render_sidebar
 
 st.set_page_config(page_title="Reportes y Análisis", layout="wide")
 
 if not st.session_state.get("autenticado"):
     st.switch_page("app.py")
 
+if st.session_state.get("rol") != "admin":
+    st.error("No tienes permiso para acceder a esta página.")
+    st.stop()
+
+render_sidebar()
 init_db()
 
 

@@ -10,12 +10,14 @@ import streamlit as st
 
 from utils.database import get_connection, init_db, query_df
 from utils.wa_parser import parse_whatsapp_message_items
+from utils.sidebar import render_sidebar
 
 st.set_page_config(page_title="Importar WhatsApp", layout="wide")
 
 if not st.session_state.get("autenticado"):
     st.switch_page("app.py")
 
+render_sidebar()
 init_db()
 
 _COLS = ["Producto", "Cantidad", "Precio Unitario", "Total"]

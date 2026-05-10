@@ -9,12 +9,14 @@ import pandas as pd
 import streamlit as st
 
 from utils.database import execute, get_connection, init_db, query_df
+from utils.sidebar import render_sidebar
 
 st.set_page_config(page_title="Gestión de Pedidos", layout="wide")
 
 if not st.session_state.get("autenticado"):
     st.switch_page("app.py")
 
+render_sidebar()
 init_db()
 
 ESTADOS_SELECT = ["Todos", "pendiente", "en_preparacion", "entregado", "cancelado"]
@@ -556,13 +558,22 @@ def _render_tabla_pedidos(subdf: pd.DataFrame, tab_prefix: str = "t") -> None:
                     st.rerun()
 
             with cd:
-                cancel_disabled = estado_str in ("cancelado", "entregado")
+                # Vendedor no puede cancelar pedidos
+                es_vendedor    = st.session_state.get("rol") == "vendedor"
+                cancel_disabled = estado_str in ("cancelado", "entregado") or es_vendedor
+                cancel_help     = (
+                    "No tienes permiso para cancelar pedidos"
+                    if es_vendedor
+                    else "No se puede cancelar un pedido ya entregado o cancelado"
+                    if estado_str in ("cancelado", "entregado")
+                    else ""
+                )
                 if st.button(
                     "Cancelar",
                     key=f"cancel_{ks}",
                     use_container_width=True,
                     disabled=cancel_disabled,
-                    help="No se puede cancelar un pedido ya entregado o cancelado" if cancel_disabled else "",
+                    help=cancel_help,
                 ):
                     st.session_state["gp_cancel_pid"] = pid
                     st.rerun()

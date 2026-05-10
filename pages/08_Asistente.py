@@ -1,19 +1,22 @@
 """Asistente IA — Chatbot de consultas del negocio."""
-import streamlit.components.v1 as components
+
 from __future__ import annotations
 
 import os
 from datetime import date
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from utils.database import init_db, query_df
+from utils.sidebar import render_sidebar
 
 st.set_page_config(page_title="Asistente IA", layout="wide")
 
 if not st.session_state.get("autenticado"):
     st.switch_page("app.py")
 
+render_sidebar()
 init_db()
 
 

@@ -8,12 +8,14 @@ import streamlit as st
 from datetime import date
 
 from utils.database import execute, init_db, query_df
+from utils.sidebar import render_sidebar
 
 st.set_page_config(page_title="Cierre de Caja", layout="wide")
 
 if not st.session_state.get("autenticado"):
     st.switch_page("app.py")
 
+render_sidebar()
 init_db()
 
 
