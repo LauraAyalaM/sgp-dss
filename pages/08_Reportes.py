@@ -92,7 +92,12 @@ def _obtener_clientes_frecuentes() -> pd.DataFrame:
 
 st.title("Reportes y Análisis")
 
-tab1, tab2, tab3 = st.tabs(["Productos más vendidos", "Ventas por fecha", "Clientes frecuentes"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Productos más vendidos",
+    "Ventas por fecha",
+    "Clientes frecuentes",
+    "Descargar reporte PDF",
+])
 
 with tab1:
     st.subheader("Top 5 Productos más Vendidos")
@@ -245,3 +250,118 @@ with tab3:
             
             with col_tabla:
                 st.dataframe(df_display, hide_index=True, use_container_width=True)
+
+with tab4:
+    from utils.pdf_report import generar_reporte_pdf  # type: ignore
+ 
+    st.subheader("Descargar Reporte PDF")
+    st.markdown(
+        "Genera un reporte completo en PDF con KPIs, ventas por día, "
+        "productos más vendidos, métodos de pago y clientes destacados."
+    )
+ 
+    # ── Selector de rango rápido ──────────────────────────────────────────
+    hoy = date.today()
+ 
+    col_rango, col_custom = st.columns([2, 3])
+ 
+    with col_rango:
+        rango = st.selectbox(
+            "Rango predefinido",
+            ["Hoy", "Ayer", "Últimos 7 días", "Últimos 30 días",
+             "Este mes", "Mes anterior", "Personalizado"],
+            index=2,
+            key="pdf_rango",
+        )
+ 
+    # Calcular fechas según rango
+    if rango == "Hoy":
+        f_ini_default, f_fin_default = hoy, hoy
+    elif rango == "Ayer":
+        ayer = hoy - timedelta(days=1)
+        f_ini_default, f_fin_default = ayer, ayer
+    elif rango == "Últimos 7 días":
+        f_ini_default = hoy - timedelta(days=6)
+        f_fin_default = hoy
+    elif rango == "Últimos 30 días":
+        f_ini_default = hoy - timedelta(days=29)
+        f_fin_default = hoy
+    elif rango == "Este mes":
+        f_ini_default = hoy.replace(day=1)
+        f_fin_default = hoy
+    elif rango == "Mes anterior":
+        primer_dia_mes = hoy.replace(day=1)
+        ultimo_mes = primer_dia_mes - timedelta(days=1)
+        f_ini_default = ultimo_mes.replace(day=1)
+        f_fin_default = ultimo_mes
+    else:  # Personalizado
+        f_ini_default = hoy - timedelta(days=6)
+        f_fin_default = hoy
+ 
+    with col_custom:
+        if rango == "Personalizado":
+            c1, c2 = st.columns(2)
+            with c1:
+                f_ini = st.date_input("Desde", value=f_ini_default, key="pdf_ini")
+            with c2:
+                f_fin = st.date_input("Hasta", value=f_fin_default, key="pdf_fin")
+        else:
+            f_ini, f_fin = f_ini_default, f_fin_default
+            st.info(
+                f"Período: **{f_ini.strftime('%d/%m/%Y')}** — **{f_fin.strftime('%d/%m/%Y')}**"
+            )
+ 
+    # ── Vista previa de métricas ──────────────────────────────────────────
+    if f_ini <= f_fin:
+        from utils.database import query_df  # ya importado arriba, pero por si acaso
+ 
+        df_prev = query_df(
+            """
+            SELECT
+                COUNT(*)                    AS pedidos,
+                COALESCE(SUM(total), 0)     AS ingresos,
+                COALESCE(AVG(total), 0)     AS ticket
+            FROM Pedidos
+            WHERE date(fecha) BETWEEN date(?) AND date(?)
+              AND estado != 'cancelado'
+            """,
+            (f_ini.strftime("%Y-%m-%d"), f_fin.strftime("%Y-%m-%d")),
+        )
+ 
+        if not df_prev.empty:
+            row = df_prev.iloc[0]
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Pedidos en el período", int(row["pedidos"]))
+            m2.metric("Ingresos", _fmt_cop(float(row["ingresos"])))
+            m3.metric("Ticket promedio", _fmt_cop(float(row["ticket"])))
+ 
+        # ── Botón de descarga ─────────────────────────────────────────────
+        st.divider()
+        nombre_archivo = (
+            f"reporte_{f_ini.strftime('%Y%m%d')}_{f_fin.strftime('%Y%m%d')}.pdf"
+        )
+ 
+        if st.button("Generar PDF", type="primary", key="pdf_generar"):
+            with st.spinner("Generando reporte…"):
+                try:
+                    pdf_bytes = generar_reporte_pdf(
+                        fecha_inicio=f_ini,
+                        fecha_fin=f_fin,
+                        nombre_negocio="SGP-DSS",
+                    )
+                    st.session_state["pdf_bytes"]   = pdf_bytes
+                    st.session_state["pdf_archivo"] = nombre_archivo
+                    st.success("¡Reporte listo! Haz clic en Descargar.")
+                except Exception as e:
+                    st.error(f"Error al generar el PDF: {e}")
+ 
+        if "pdf_bytes" in st.session_state:
+            st.download_button(
+                label="Descargar PDF",
+                data=st.session_state["pdf_bytes"],
+                file_name=st.session_state["pdf_archivo"],
+                mime="application/pdf",
+                type="primary",
+            )
+    else:
+        st.warning("La fecha de inicio debe ser anterior o igual a la fecha de fin.")
